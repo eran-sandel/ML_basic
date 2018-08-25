@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 
 import pandas as pd
@@ -7,11 +6,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.externals.six import StringIO  
+from sklearn.tree import export_graphviz
 
 from IPython.display import Image, display
 import pydotplus
-from sklearn.externals.six import StringIO  
-from sklearn.tree import export_graphviz
 
 import argparse
 
@@ -24,7 +23,7 @@ def add_args(parser):
 	parser.add_argument('--target','-t', action='store', required=True, dest='target',help='Add target values')
 	parser.add_argument('--mlnmin', action='store', default=20, required=False, dest='mlnmin',help='define min tree depth')
 	parser.add_argument('--mlnmax', action='store', default=100, required=False, dest='mlnmax',help='define max tree depth')
-	parser.add_argument('--model', action='store', default='DecisionTreeRegressor', required=False, dest='modeltype',help='define max tree depth')
+	parser.add_argument('--model', action='store', default='DecisionTreeRegressor', required=False, dest='modeltype',help='DecisionTreeRegressor/DecisionTreeClassifier/RandomForestRegressor')
 
 def set_model(mln,train_X,train_y,modeltype):
 	# Specify Model, set max nodes
@@ -33,6 +32,10 @@ def set_model(mln,train_X,train_y,modeltype):
 		model = DecisionTreeRegressor(max_leaf_nodes=mln,random_state=1)
 	elif ( modeltype.lower() == "DecisionTreeClassifier".lower()):
 		model = DecisionTreeClassifier(max_leaf_nodes=mln,random_state=1)
+	elif (modeltype.lower() == "RandomForestRegressor".lower()):
+		model = RandomForestRegressor(max_leaf_nodes=mln,random_state=1)
+	else:
+		print("Invalid model, please select between DecisionTreeRegressor/DecisionTreeClassifier/RandomForestRegressor")
 	# Fit Model
 	model.fit(train_X, train_y)
 	# Make validation predictions and calculate mean absolute error
@@ -87,7 +90,7 @@ def run_model(data,mlnmin,mlnmax,target,features,model_type):
 		if mae < best_mae:
 			best_mae = mae
 			best_mln_idx = mln
-	print("MLN: "+str(best_mln_idx)+" MAE: "+str(best_mae))
+	print("MLN: "+str(best_mln_idx)+" Mean avg error: "+str(best_mae))
 
 
 if __name__ == "__main__":

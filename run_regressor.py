@@ -22,7 +22,7 @@ def add_args(parser):
 	parser.add_argument('--desc', action='store_true', default=False,dest='description',help='print description')
 	parser.add_argument('--features','-f', action='append', required=True, dest='features',default=[],help='Add feature values')
 	parser.add_argument('--target','-t', action='store', required=True, dest='target',help='Add target values')
-	parser.add_argument('--mlnmin', action='store', default=20, required=False, dest='mlnmin',help='define min tree depth')
+	parser.add_argument('--mlnmin', action='store', default=2, required=False, dest='mlnmin',help='define min tree depth')
 	parser.add_argument('--mlnmax', action='store', default=100, required=False, dest='mlnmax',help='define max tree depth')
 	parser.add_argument('--model', action='store', default='DecisionTreeRegressor', required=False, dest='modeltype',help='DecisionTreeRegressor/DecisionTreeClassifier/RandomForestRegressor')
 	parser.add_argument('--draw', action='store_true', default=False, required=False, dest='draw_tree',help='Draw tree')
@@ -56,13 +56,13 @@ def get_data_description(data):
 	print data.columns
 	print(data.head())
 
-def draw_tree(model):
+def draw_tree(model,features):
 	import ipdb
 	#ipdb.set_trace()
 	dot_data = StringIO()
 	dot_data = export_graphviz(model, out_file=None, 
                 filled=True, rounded=True,
-                special_characters=True)
+                special_characters=True,feature_names=features)
 
 	Source(dot_data).view()
 
@@ -77,13 +77,13 @@ def run_model(data,mlnmin,mlnmax,target,features,model_type):
 	global args
 	best_mae = 99999999999
 	best_mln_idx = mlnmin
-
 	# Create target object and call it y
 	y = data[target]
 	# Create features object and call it X
 	X = data[features]
 	# Split into validation and training data
 	train_X, val_X, train_y, val_y = train_test_split(X, y, random_state=1)
+	model = set_model(2,train_X,train_y,model_type)
 
 	for mln in range(mlnmin,mlnmax,5):
 		model = set_model(mln,train_X,train_y,model_type)
@@ -117,4 +117,4 @@ if __name__ == "__main__":
 
 	best_model = run_model(data,int(args.mlnmin),int(args.mlnmax),args.target,args.features,args.modeltype)
 	if (args.draw_tree):
-		draw_tree(best_model)
+		draw_tree(best_model, args.features)

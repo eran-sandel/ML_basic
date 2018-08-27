@@ -9,8 +9,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.externals.six import StringIO  
 from sklearn.tree import export_graphviz
 
-from IPython.display import Image, display
+#from IPython.display import Image, display
 import pydotplus
+from graphviz import Source
 
 import argparse
 
@@ -24,6 +25,7 @@ def add_args(parser):
 	parser.add_argument('--mlnmin', action='store', default=20, required=False, dest='mlnmin',help='define min tree depth')
 	parser.add_argument('--mlnmax', action='store', default=100, required=False, dest='mlnmax',help='define max tree depth')
 	parser.add_argument('--model', action='store', default='DecisionTreeRegressor', required=False, dest='modeltype',help='DecisionTreeRegressor/DecisionTreeClassifier/RandomForestRegressor')
+	parser.add_argument('--draw', action='store_true', default=False, required=False, dest='draw_tree',help='Draw tree')
 
 def set_model(mln,train_X,train_y,modeltype):
 	# Specify Model, set max nodes
@@ -54,15 +56,15 @@ def get_data_description(data):
 	print data.columns
 	print(data.head())
 
-def draw_tree(model,train_X, train_y):
+def draw_tree(model):
+	import ipdb
+	#ipdb.set_trace()
 	dot_data = StringIO()
-	model.fit(train_X, train_y)
 	dot_data = export_graphviz(model, out_file=None, 
                 filled=True, rounded=True,
                 special_characters=True)
-	graph = pydotplus.graph_from_dot_data(dot_data)  
-	Image(graph.create_png())
 
+	Source(dot_data).view()
 
 def open_file(file_path):
 	data = pd.read_csv(file_path)
@@ -87,11 +89,12 @@ def run_model(data,mlnmin,mlnmax,target,features,model_type):
 		model = set_model(mln,train_X,train_y,model_type)
 		val_predictions = predict_model(model, val_X)
 		mae = get_mae(val_predictions,val_y)
-		if mae < best_mae:
+		if mae <= best_mae:
 			best_mae = mae
 			best_mln_idx = mln
+			best_model = model
 	print("MLN: "+str(best_mln_idx)+" Mean avg error: "+str(best_mae))
-
+	return model
 
 if __name__ == "__main__":
 	global args
@@ -112,5 +115,6 @@ if __name__ == "__main__":
 	print("model type: " + str(args.modeltype))
 	print("----------------------------------------------------------------------------------------------------------------")
 
-	run_model(data,int(args.mlnmin),int(args.mlnmax),args.target,args.features,args.modeltype)
-	#draw_tree(model,train_X,train_y)
+	best_model = run_model(data,int(args.mlnmin),int(args.mlnmax),args.target,args.features,args.modeltype)
+	if (args.draw_tree):
+		draw_tree(best_model)
